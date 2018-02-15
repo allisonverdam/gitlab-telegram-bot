@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+	#!/usr/bin/env python3
 
 import json
 from flask import Flask
@@ -22,26 +22,29 @@ class GitlabBot(Bot):
         except:
             open('chats', 'w').write(json.dumps(self.chats))
 
-        self.send_to_all('Hi !')
+        self.send_to_all('Olá.')
 
     def text_recv(self, txt, chatid):
         ''' registering chats '''
         txt = txt.strip()
         if txt.startswith('/'):
             txt = txt[1:]
-        if txt == self.authmsg:
+        if txt == 'conectar':
             if str(chatid) in self.chats:
-                self.reply(chatid, "\U0001F60E  boy, you already got the power.")
+                self.reply(chatid, "\U0001F60E  Você ja esta recendo as notificações.")
             else:
-                self.reply(chatid, "\U0001F60E  Ok boy, you got the power !")
+                self.reply(chatid, "\U0001F60E  Pronto, agora você recebera as notificações!")
                 self.chats[chatid] = True
                 open('chats', 'w').write(json.dumps(self.chats))
-        elif txt == 'shutupbot':
+        elif txt == 'sair':
+            self.reply(chatid, "\U0001F63F Ok, estou aqui caso precise.")
             del self.chats[chatid]
-            self.reply(chatid, "\U0001F63F Ok, take it easy\nbye.")
-            open('chats', 'w').write(json.dumps(self.chats))
+            if self.chats.keys().count() == 0:
+                open('chats', 'w').write({})
+            else:
+                open('chats', 'w').write(json.dumps(self.chats))
         else:
-            self.reply(chatid, "\U0001F612 I won't talk to you.")
+            self.reply(chatid, "\U0001F612 Não tenho nada a dizer.")
 
     def send_to_all(self, msg):
         for c in self.chats:
@@ -79,7 +82,7 @@ def webhook():
 
 
 def generatePushMsg(data):
-    msg = '*{0} ({1}) - {2} new commits*\n'\
+    msg = '*{0} ({1}) - {2} novos commits*\n'\
         .format(data['project']['name'], data['project']['default_branch'], data['total_commits_count'])
     for commit in data['commits']:
         msg = msg + '----------------------------------------------------------------\n'
@@ -92,10 +95,10 @@ def generatePushMsg(data):
 def generateIssueMsg(data):
     action = data['object_attributes']['action']
     if action == 'open':
-        msg = '*{0} new Issue for {1}*\n'\
+        msg = '*{0} nova Issue para {1}*\n'\
             .format(data['project']['name'], data['assignee']['name'])
     elif action == 'close':
-        msg = '*{0} Issue closed by {1}*\n'\
+        msg = '*{0} Issue fechada por {1}*\n'\
             .format(data['project']['name'], data['user']['name'])
     msg = msg + '*{0}*'.format(data['object_attributes']['title'])
     msg = msg + 'see {0} for further details'.format(data['object_attributes']['url'])
@@ -105,7 +108,7 @@ def generateIssueMsg(data):
 def generateCommentMsg(data):
     ntype = data['object_attributes']['noteable_type']
     if ntype == 'Commit':
-        msg = 'note to commit'
+        return generateCommitMsg(data)
     elif ntype == 'MergeRequest':
         msg = 'note to MergeRequest'
     elif ntype == 'Issue':
@@ -130,6 +133,14 @@ def generatePipelineMsg(data):
 def generateBuildMsg(data):
     return 'new build stuff'
 
+def generateCommitMsg(data):
+    msg = '*{0} ({1}) - novo commit: *'.format(data['project']['name'], data['project']['default_branch'])
+    msg = msg + '\n Mensagem: {0}'.format(data['commit']['message'])
+    msg = msg + '\n Commit feito por: {0}'.format(data['commit']['author']['name'])
+    msg = msg + '\n Criado em: {0}'.format(data['commit']['timestamp'])
+    msg = msg + '\n' + data['commit']['url'].replace("_", "\_") + '\n'
+    msg = msg + '----------------------------------------------------------------\n'
+    return msg
 
 if __name__ == "__main__":
     b.run_threaded()
