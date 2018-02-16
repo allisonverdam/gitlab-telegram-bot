@@ -103,6 +103,7 @@ def webhook():
 def generatePushMsg(data):
     msg = '*{0} ({1}) - {2} novos commits*\n'\
         .format(data['project']['name'], data['project']['default_branch'], data['total_commits_count'])
+    msg = msg + 'Autor: {0} \n'.format(data['user_name'])
     for commit in data['commits']:
         msg = msg + '----------------------------------------------------------------\n'
         msg = msg + commit['message'].rstrip()
@@ -127,7 +128,7 @@ def generateIssueMsg(data):
 def generateCommentMsg(data):
     ntype = data['object_attributes']['noteable_type']
     if ntype == 'Commit':
-        return generateCommitMsg(data)
+        return
     elif ntype == 'MergeRequest':
         msg = 'note to MergeRequest'
     elif ntype == 'Issue':
