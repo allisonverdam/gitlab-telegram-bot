@@ -5,24 +5,20 @@ from flask import Flask
 from flask import request
 from flask import jsonify
 from bot import Bot
+from chat import Chat
 app = Flask(__name__)
 
 class GitlabBot(Bot):
     def __init__(self):
-        try:
-            self.authmsg = open('authmsg').read().strip()
-        except:
-            raise Exception("The authorization messsage file is invalid")
-
         super(GitlabBot, self).__init__()
-        self.chats = {}
+        self.chats = []
         try:
             chats = open('chats', 'r').read()
             self.chats = json.loads(chats)
         except:
             open('chats', 'w').write(json.dumps(self.chats))
 
-        self.send_to_all('Olá.')
+        #self.send_to_all('Olá.')
 
     def text_recv(self, txt, chatid):
         ''' registering chats '''
@@ -30,19 +26,42 @@ class GitlabBot(Bot):
         if txt.startswith('/'):
             txt = txt[1:]
         if txt == 'conectar':
-            if str(chatid) in self.chats:
-                self.reply(chatid, "\U0001F60E  Você ja esta recendo as notificações.")
-            else:
+            if len(self.chats) == 0:
                 self.reply(chatid, "\U0001F60E  Pronto, agora você recebera as notificações!")
-                self.chats[chatid] = True
+                self.chats.append(json.dumps(Chat(True,chatid).__dict__))
                 open('chats', 'w').write(json.dumps(self.chats))
-        elif txt == 'sair':
-            self.reply(chatid, "\U0001F63F Ok, estou aqui caso precise.")
-            del self.chats[chatid]
-            if self.chats.keys().count() == 0:
-                open('chats', 'w').write({})
             else:
-                open('chats', 'w').write(json.dumps(self.chats))
+                achou = False
+                for i in range(len(self.chats)):
+                    if chatid == json.loads(self.chats[i])['chatid'] and json.loads(self.chats[i])['enviarMensagens'] == True:
+                        achou = True
+                        self.reply(chatid, "\U0001F60E  Você ja esta recendo as notificações.")
+                        break
+                    elif chatid == json.loads(self.chats[i])['chatid'] and json.loads(self.chats[i])['enviarMensagens'] == False:
+                        achou = True
+                        self.reply(chatid, "\U0001F60E  Pronto, agora você recebera as notificações!")
+                        temp = json.loads(self.chats[i])
+                        temp['enviarMensagens'] = True
+                        self.chats[i] = json.dumps(temp)
+                        open('chats', 'w').write(json.dumps(self.chats))
+                        break
+                if achou == False:
+                    self.reply(chatid, "\U0001F60E  Pronto, agora você recebera as notificações!")
+                    self.chats.append(json.dumps(Chat(True,chatid).__dict__))
+                    open('chats', 'w').write(json.dumps(self.chats))
+        elif txt == 'sair':
+            achou = False
+            for i in range(len(self.chats)):
+                if chatid == json.loads(self.chats[i])['chatid'] and json.loads(self.chats[i])['enviarMensagens'] == True:
+                    achou = True
+                    self.reply(chatid, "\U0001F63F Ok, estou aqui caso precise.")
+                    temp = json.loads(self.chats[i])
+                    temp['enviarMensagens'] = False
+                    self.chats[i] = json.dumps(temp)
+                    open('chats', 'w').write(json.dumps(self.chats))
+                    break
+            if achou == False:
+                self.reply(chatid, 'Você não está inscrito em nenhum projeto.')
         else:
             self.reply(chatid, "\U0001F612 Não tenho nada a dizer.")
 
