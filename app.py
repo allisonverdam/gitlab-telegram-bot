@@ -67,7 +67,7 @@ class GitlabBot(Bot):
 
     def send_to_all(self, msg):
         for c in self.chats:
-            self.reply(c, msg)
+            self.reply(json.loads(c)['chatid'], msg)
 
 
 b = GitlabBot()
