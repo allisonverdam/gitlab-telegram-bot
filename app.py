@@ -101,6 +101,8 @@ def webhook():
 
 
 def generatePushMsg(data):
+    if data['total_commits_count'] == 0:
+        return
     msg = '*{0} ({1}) - {2} novos commits*\n'\
         .format(data['project']['name'], data['project']['default_branch'], data['total_commits_count'])
     msg = msg + 'Autor: {0} \n'.format(data['user_name'])
