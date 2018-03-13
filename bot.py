@@ -3,6 +3,7 @@
 import time
 import requests
 from threading import Thread
+import schedule
 
 
 class Bot:
@@ -72,6 +73,7 @@ class Bot:
         self.running = True
         while self.running:
             self.updates()
+            schedule.run_pending()
             time.sleep(1)
 
     def run_threaded(self):

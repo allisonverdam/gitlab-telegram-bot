@@ -6,6 +6,8 @@ from flask import request
 from flask import jsonify
 from bot import Bot
 from chat import Chat
+import schedule
+from datetime import datetime
 app = Flask(__name__)
 
 class GitlabBot(Bot):
@@ -69,8 +71,15 @@ class GitlabBot(Bot):
         for c in self.chats:
             self.reply(json.loads(c)['chatid'], msg)
 
-
 b = GitlabBot()
+
+def daily():
+    weekDay=datetime.today().weekday()
+    if(weekDay == 5 or weekDay == 6):
+        return
+    b.send_to_all("HORA DA DAILY!!! \U0001F554 \U0001F64B 🙋‍♂️")
+
+schedule.every().day.at("17:00").do(daily)
 
 
 @app.route("/", methods=['GET', 'POST'])
